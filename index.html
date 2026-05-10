@@ -1,0 +1,646 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Visage Sain - Diagnóstico Inteligente de Pele</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --primary: #2d5a4d;
+            --secondary: #e8f4f1;
+            --accent: #d4a574;
+            --text-dark: #1a1a1a;
+            --text-light: #666;
+            --border: #d4e4e0;
+            --success: #4a8b7f;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #fafbf8 0%, #f0f6f4 100%);
+            color: var(--text-dark);
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        header {
+            padding: 24px 20px 16px;
+            text-align: center;
+            animation: slideDown 0.6s ease-out;
+        }
+
+        .logo {
+            font-family: 'Playfair Display', serif;
+            font-size: 30px;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 6px;
+            letter-spacing: -0.5px;
+        }
+
+        .tagline {
+            font-size: 12px;
+            color: var(--text-light);
+            font-weight: 400;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+        }
+
+        .container {
+            max-width: 480px;
+            margin: 0 auto;
+            padding: 16px 20px 40px;
+        }
+
+        .hero {
+            text-align: center;
+            margin: 24px 0 32px;
+            animation: fadeInUp 0.8s ease-out 0.2s backwards;
+        }
+
+        .hero h1 {
+            font-family: 'Playfair Display', serif;
+            font-size: 30px;
+            font-weight: 700;
+            margin-bottom: 12px;
+            line-height: 1.2;
+            color: var(--primary);
+        }
+
+        .hero p {
+            font-size: 15px;
+            color: var(--text-light);
+            margin-bottom: 0;
+            font-weight: 300;
+        }
+
+        .camera-section {
+            margin: 24px 0;
+            animation: fadeInUp 0.8s ease-out 0.4s backwards;
+        }
+
+        .camera-container {
+            position: relative;
+            background: white;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 10px 40px rgba(45, 90, 77, 0.08);
+            border: 2px solid var(--border);
+            margin-bottom: 16px;
+            aspect-ratio: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .camera-placeholder {
+            text-align: center;
+            color: var(--text-light);
+            padding: 20px;
+        }
+
+        .camera-placeholder svg {
+            width: 64px;
+            height: 64px;
+            margin-bottom: 12px;
+            opacity: 0.4;
+        }
+
+        .camera-placeholder p {
+            font-size: 14px;
+        }
+
+        video, canvas, .preview-image {
+            width: 100%;
+            height: 100%;
+            display: block;
+            object-fit: cover;
+        }
+
+        #canvas { display: none; }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 16px;
+        }
+
+        button {
+            flex: 1;
+            padding: 14px 16px;
+            border: none;
+            border-radius: 12px;
+            font-family: 'Poppins', sans-serif;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            letter-spacing: 0.3px;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:active {
+            background: #1e3f38;
+            transform: scale(0.98);
+        }
+
+        .btn-secondary {
+            background: white;
+            color: var(--primary);
+            border: 2px solid var(--border);
+        }
+
+        .btn-secondary:active {
+            background: var(--secondary);
+            transform: scale(0.98);
+        }
+
+        .btn-success {
+            background: var(--success);
+            color: white;
+        }
+
+        .btn-success:active {
+            background: #3a6b5f;
+            transform: scale(0.98);
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .status-message {
+            text-align: center;
+            padding: 16px;
+            border-radius: 12px;
+            margin-bottom: 16px;
+            font-size: 14px;
+            display: none;
+            animation: slideDown 0.4s ease-out;
+        }
+
+        .status-message.show { display: block; }
+
+        .status-message.info {
+            background: #e3f2fd;
+            color: #1565c0;
+            border-left: 4px solid #1565c0;
+        }
+
+        .status-message.error {
+            background: #ffebee;
+            color: #c62828;
+            border-left: 4px solid #c62828;
+        }
+
+        .diagnosis-section {
+            display: none;
+            animation: fadeInUp 0.6s ease-out;
+        }
+
+        .diagnosis-section.show { display: block; }
+
+        .diagnosis-card {
+            background: white;
+            border-radius: 16px;
+            padding: 22px;
+            margin-bottom: 16px;
+            border: 2px solid var(--border);
+            box-shadow: 0 6px 20px rgba(45, 90, 77, 0.06);
+        }
+
+        .diagnosis-badge {
+            display: inline-block;
+            background: var(--secondary);
+            color: var(--primary);
+            padding: 6px 14px;
+            border-radius: 50px;
+            font-size: 11px;
+            font-weight: 600;
+            margin-bottom: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+        }
+
+        .diagnosis-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 10px;
+        }
+
+        .diagnosis-subtitle {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--accent);
+            margin-bottom: 12px;
+        }
+
+        .diagnosis-text {
+            font-size: 14px;
+            color: var(--text-dark);
+            line-height: 1.7;
+            margin-bottom: 12px;
+        }
+
+        .section-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--primary);
+            margin-bottom: 12px;
+            padding-top: 16px;
+            border-top: 2px solid var(--border);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .diagnosis-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .diagnosis-list li {
+            padding: 10px 0;
+            padding-left: 26px;
+            position: relative;
+            font-size: 13px;
+            color: var(--text-dark);
+            line-height: 1.5;
+        }
+
+        .diagnosis-list li:before {
+            content: "✓";
+            position: absolute;
+            left: 0;
+            top: 10px;
+            color: var(--success);
+            font-weight: bold;
+            font-size: 14px;
+        }
+
+        .info-pill {
+            display: inline-block;
+            background: var(--secondary);
+            color: var(--primary);
+            padding: 8px 14px;
+            border-radius: 50px;
+            font-size: 12px;
+            font-weight: 500;
+            margin-right: 6px;
+            margin-bottom: 6px;
+        }
+
+        .cta-section {
+            background: linear-gradient(135deg, var(--primary) 0%, #1e3f38 100%);
+            color: white;
+            padding: 28px 22px;
+            border-radius: 16px;
+            text-align: center;
+            margin: 24px 0;
+            display: none;
+            animation: fadeInUp 0.6s ease-out;
+        }
+
+        .cta-section.show { display: block; }
+
+        .cta-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 22px;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+
+        .cta-text {
+            font-size: 14px;
+            margin-bottom: 20px;
+            opacity: 0.95;
+        }
+
+        .btn-whatsapp {
+            background: #25d366;
+            color: white;
+            width: 100%;
+            padding: 16px;
+            font-size: 15px;
+            font-weight: 700;
+            border-radius: 12px;
+            text-decoration: none;
+            display: block;
+            transition: all 0.3s ease;
+            border: none;
+            cursor: pointer;
+            margin-bottom: 10px;
+        }
+
+        .btn-whatsapp:active {
+            background: #20ba5a;
+            transform: scale(0.98);
+        }
+
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        .spinner {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(21, 101, 192, 0.3);
+            border-top: 2px solid #1565c0;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin-right: 8px;
+            vertical-align: middle;
+        }
+
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .footer-note {
+            text-align: center;
+            font-size: 11px;
+            color: var(--text-light);
+            margin-top: 20px;
+            padding: 0 20px;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="logo">Visage Sain</div>
+        <div class="tagline">Diagnóstico Inteligente</div>
+    </header>
+
+    <div class="container">
+        <div class="hero">
+            <h1>Descubra a solução para suas manchas</h1>
+            <p>Tire uma foto e receba um diagnóstico personalizado em segundos</p>
+        </div>
+
+        <div class="camera-section">
+            <div class="camera-container" id="cameraContainer">
+                <div class="camera-placeholder" id="placeholder">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/>
+                    </svg>
+                    <p>Sua foto aparecerá aqui</p>
+                </div>
+                <video id="video" playsinline autoplay style="display:none;"></video>
+                <canvas id="canvas"></canvas>
+                <img id="preview" class="preview-image" style="display:none;" alt="Preview">
+            </div>
+
+            <div class="button-group" id="initialButtons">
+                <button class="btn-primary" id="startCamera">📷 Câmera</button>
+                <button class="btn-secondary" id="uploadFile">📁 Galeria</button>
+            </div>
+
+            <input type="file" id="fileInput" accept="image/*" style="display: none;">
+
+            <div class="button-group" id="captureButtons" style="display: none;">
+                <button class="btn-success" id="capturePhoto">Capturar Foto</button>
+                <button class="btn-secondary" id="stopCamera">Cancelar</button>
+            </div>
+
+            <div id="photoStatus" class="status-message info">
+                <span class="spinner"></span>
+                <span id="statusText">Analisando sua pele...</span>
+            </div>
+
+            <div class="button-group" id="resetButtons" style="display: none;">
+                <button class="btn-secondary" id="resetButton">↻ Nova Análise</button>
+            </div>
+        </div>
+
+        <div class="diagnosis-section" id="diagnosisSection">
+            <div class="diagnosis-card">
+                <div class="diagnosis-badge">Diagnóstico</div>
+                <h2 class="diagnosis-title" id="diagnosisTitle">Tipo de Pele</h2>
+                <div class="diagnosis-subtitle" id="diagnosisProblem"></div>
+                <p class="diagnosis-text" id="diagnosisDescription"></p>
+                <div id="diagnosisPills"></div>
+            </div>
+
+            <div class="diagnosis-card">
+                <div class="section-title" style="border-top:none; padding-top:0;">
+                    Rotina de Tratamento
+                </div>
+                <ul class="diagnosis-list" id="treatmentList"></ul>
+            </div>
+
+            <div class="diagnosis-card">
+                <div class="section-title" style="border-top:none; padding-top:0;">
+                    Produtos Recomendados
+                </div>
+                <ul class="diagnosis-list" id="productsList"></ul>
+                <p style="font-size: 12px; color: var(--text-light); margin-top: 16px; padding-top: 16px; border-top: 2px solid var(--border);">
+                    💡 Resultados esperados em <strong id="tempoResultado">8-12 semanas</strong>
+                </p>
+            </div>
+        </div>
+
+        <div class="cta-section" id="ctaSection">
+            <div class="cta-title">Quer o prontuário completo?</div>
+            <div class="cta-text">
+                Receba seu diagnóstico detalhado com links dos produtos via WhatsApp.
+            </div>
+            <a href="#" class="btn-whatsapp" id="whatsappLink" target="_blank">
+                💬 Falar no WhatsApp
+            </a>
+        </div>
+
+        <div class="footer-note">
+            ⚕️ Diagnóstico orientativo. Para casos graves, consulte um dermatologista.
+        </div>
+    </div>
+
+    <script>
+        const video = document.getElementById('video');
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        const preview = document.getElementById('preview');
+        const placeholder = document.getElementById('placeholder');
+        const startCameraBtn = document.getElementById('startCamera');
+        const stopCameraBtn = document.getElementById('stopCamera');
+        const captureBtn = document.getElementById('capturePhoto');
+        const uploadBtn = document.getElementById('uploadFile');
+        const fileInput = document.getElementById('fileInput');
+        const photoStatus = document.getElementById('photoStatus');
+        const statusText = document.getElementById('statusText');
+        const diagnosisSection = document.getElementById('diagnosisSection');
+        const ctaSection = document.getElementById('ctaSection');
+        const resetButton = document.getElementById('resetButton');
+        const whatsappLink = document.getElementById('whatsappLink');
+        const initialButtons = document.getElementById('initialButtons');
+        const captureButtons = document.getElementById('captureButtons');
+        const resetButtons = document.getElementById('resetButtons');
+
+        let stream = null;
+        let capturedImage = null;
+
+        startCameraBtn.addEventListener('click', async () => {
+            try {
+                stream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { facingMode: 'user', width: { ideal: 1280 }, height: { ideal: 720 } } 
+                });
+                video.srcObject = stream;
+                video.style.display = 'block';
+                placeholder.style.display = 'none';
+                initialButtons.style.display = 'none';
+                captureButtons.style.display = 'flex';
+            } catch (err) {
+                showStatus('Erro ao acessar câmera. Use a opção Galeria.', 'error');
+            }
+        });
+
+        stopCameraBtn.addEventListener('click', () => {
+            if (stream) stream.getTracks().forEach(track => track.stop());
+            video.style.display = 'none';
+            placeholder.style.display = 'block';
+            initialButtons.style.display = 'flex';
+            captureButtons.style.display = 'none';
+        });
+
+        captureBtn.addEventListener('click', () => {
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            ctx.drawImage(video, 0, 0);
+            capturedImage = canvas.toDataURL('image/jpeg', 0.85);
+            
+            if (stream) stream.getTracks().forEach(track => track.stop());
+            video.style.display = 'none';
+            preview.src = capturedImage;
+            preview.style.display = 'block';
+            captureButtons.style.display = 'none';
+            
+            analyzePhoto();
+        });
+
+        uploadBtn.addEventListener('click', () => fileInput.click());
+
+        fileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    capturedImage = event.target.result;
+                    placeholder.style.display = 'none';
+                    preview.src = capturedImage;
+                    preview.style.display = 'block';
+                    initialButtons.style.display = 'none';
+                    analyzePhoto();
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        async function analyzePhoto() {
+            showStatus('Analisando sua pele com IA...', 'info');
+            photoStatus.classList.add('show');
+
+            try {
+                const base64Image = capturedImage.split(',')[1];
+
+                const response = await fetch('/api/analyze', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ image: base64Image })
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.error || 'Erro na análise');
+                }
+
+                const data = await response.json();
+                displayDiagnosis(data);
+                photoStatus.classList.remove('show');
+                ctaSection.classList.add('show');
+                resetButtons.style.display = 'flex';
+
+            } catch (error) {
+                console.error('Erro:', error);
+                showStatus(`Erro: ${error.message}`, 'error');
+                resetButtons.style.display = 'flex';
+            }
+        }
+
+        function displayDiagnosis(data) {
+            document.getElementById('diagnosisTitle').textContent = `Pele ${data.tipo_pele}`;
+            document.getElementById('diagnosisProblem').textContent = data.problema_principal || '';
+            document.getElementById('diagnosisDescription').textContent = data.descricao;
+            document.getElementById('tempoResultado').textContent = data.tempo_resultado || '8-12 semanas';
+
+            // Pills com tipos de manchas
+            const pillsContainer = document.getElementById('diagnosisPills');
+            pillsContainer.innerHTML = '';
+            if (data.tipos_manchas && data.tipos_manchas.length > 0) {
+                data.tipos_manchas.forEach(mancha => {
+                    const pill = document.createElement('span');
+                    pill.className = 'info-pill';
+                    pill.textContent = mancha;
+                    pillsContainer.appendChild(pill);
+                });
+            }
+
+            // Rotina de tratamento
+            const treatmentList = document.getElementById('treatmentList');
+            treatmentList.innerHTML = data.rotina_tratamento
+                .map(t => `<li>${t}</li>`).join('');
+
+            // Produtos
+            const productsList = document.getElementById('productsList');
+            productsList.innerHTML = data.produtos_recomendados
+                .map(p => `<li>${p}</li>`).join('');
+
+            diagnosisSection.classList.add('show');
+
+            // WhatsApp link
+            const message = `Olá! Fiz uma análise no Visage Sain.
+
+📋 Diagnóstico: Pele ${data.tipo_pele}
+🎯 Problema: ${data.problema_principal}
+
+Gostaria de receber o prontuário completo com links dos produtos recomendados.`;
+            whatsappLink.href = `https://wa.me/5511982779326?text=${encodeURIComponent(message)}`;
+        }
+
+        resetButton.addEventListener('click', () => {
+            diagnosisSection.classList.remove('show');
+            ctaSection.classList.remove('show');
+            preview.style.display = 'none';
+            placeholder.style.display = 'block';
+            capturedImage = null;
+            fileInput.value = '';
+            initialButtons.style.display = 'flex';
+            resetButtons.style.display = 'none';
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+
+        function showStatus(message, type) {
+            statusText.textContent = message;
+            photoStatus.className = `status-message ${type} show`;
+        }
+    </script>
+</body>
+</html>
