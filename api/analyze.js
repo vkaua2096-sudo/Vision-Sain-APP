@@ -65,7 +65,8 @@ IMPORTANTE: Se a imagem não mostrar pele claramente, responda:
         'anthropic-version': '2023-06-01'
       },
       body: JSON.stringify({
-        model: 'claude-opus-4-5-20250929',
+        model:  'claude-opus-4-7',
+
         max_tokens: 1500,
         messages: [
           {
