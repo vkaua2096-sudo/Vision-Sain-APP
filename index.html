@@ -540,23 +540,48 @@
 
         fileInput.addEventListener('change', (e) => {
             const file = e.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = (event) => {
-                    capturedImage = event.target.result;
-                    placeholder.style.display = 'none';
-                    preview.src = capturedImage;
-                    preview.style.display = 'block';
-                    initialButtons.style.display = 'none';
-                    analyzePhoto();
-                };
-                reader.readAsDataURL(file);
+            if (!file) return;
+
+            if (file.size > 10 * 1024 * 1024) {
+                showStatus('Imagem muito grande. Escolha uma foto menor que 10 MB.', 'error');
+                fileInput.value = '';
+                return;
             }
+
+            const reader = new FileReader();
+            reader.onload = async (event) => {
+                capturedImage = await compressImage(event.target.result);
+                placeholder.style.display = 'none';
+                preview.src = capturedImage;
+                preview.style.display = 'block';
+                initialButtons.style.display = 'none';
+                fileInput.value = '';
+                analyzePhoto();
+            };
+            reader.readAsDataURL(file);
         });
 
+        async function compressImage(dataUrl, maxDim = 1024, quality = 0.8) {
+            return new Promise(resolve => {
+                const img = new Image();
+                img.onload = () => {
+                    const ratio = Math.min(maxDim / img.width, maxDim / img.height, 1);
+                    const c = document.createElement('canvas');
+                    c.width = Math.round(img.width * ratio);
+                    c.height = Math.round(img.height * ratio);
+                    c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+                    resolve(c.toDataURL('image/jpeg', quality));
+                };
+                img.src = dataUrl;
+            });
+        }
+
         async function analyzePhoto() {
-            showStatus('Analisando sua pele com IA...', 'info');
+            showStatus('Analisando com IA... pode levar até 30 segundos', 'info');
             photoStatus.classList.add('show');
+
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 60000);
 
             try {
                 const base64Image = capturedImage.split(',')[1];
@@ -564,8 +589,11 @@
                 const response = await fetch('/api/analyze', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ image: base64Image })
+                    body: JSON.stringify({ image: base64Image }),
+                    signal: controller.signal
                 });
+
+                clearTimeout(timeoutId);
 
                 if (!response.ok) {
                     const error = await response.json();
@@ -579,22 +607,25 @@
                 resetButtons.style.display = 'flex';
 
             } catch (error) {
+                clearTimeout(timeoutId);
+                const msg = error.name === 'AbortError'
+                    ? 'Análise demorou mais que 60 segundos. Tente novamente.'
+                    : `Erro: ${error.message}`;
                 console.error('Erro:', error);
-                showStatus(`Erro: ${error.message}`, 'error');
+                showStatus(msg, 'error');
                 resetButtons.style.display = 'flex';
             }
         }
 
         function displayDiagnosis(data) {
-            document.getElementById('diagnosisTitle').textContent = `Pele ${data.tipo_pele}`;
+            document.getElementById('diagnosisTitle').textContent = `Pele ${data.tipo_pele || '—'}`;
             document.getElementById('diagnosisProblem').textContent = data.problema_principal || '';
-            document.getElementById('diagnosisDescription').textContent = data.descricao;
+            document.getElementById('diagnosisDescription').textContent = data.descricao || '';
             document.getElementById('tempoResultado').textContent = data.tempo_resultado || '8-12 semanas';
 
-            // Pills com tipos de manchas
             const pillsContainer = document.getElementById('diagnosisPills');
             pillsContainer.innerHTML = '';
-            if (data.tipos_manchas && data.tipos_manchas.length > 0) {
+            if (Array.isArray(data.tipos_manchas) && data.tipos_manchas.length > 0) {
                 data.tipos_manchas.forEach(mancha => {
                     const pill = document.createElement('span');
                     pill.className = 'info-pill';
@@ -603,26 +634,23 @@
                 });
             }
 
-            // Rotina de tratamento
             const treatmentList = document.getElementById('treatmentList');
-            treatmentList.innerHTML = data.rotina_tratamento
-                .map(t => `<li>${t}</li>`).join('');
+            treatmentList.innerHTML = Array.isArray(data.rotina_tratamento)
+                ? data.rotina_tratamento.map(t => `<li>${t}</li>`).join('')
+                : '';
 
-            // Produtos
             const productsList = document.getElementById('productsList');
-            productsList.innerHTML = data.produtos_recomendados
-                .map(p => `<li>${p}</li>`).join('');
+            productsList.innerHTML = Array.isArray(data.produtos_recomendados)
+                ? data.produtos_recomendados.map(p => `<li>${p}</li>`).join('')
+                : '';
 
             diagnosisSection.classList.add('show');
 
-            // WhatsApp link
-            const message = `Olá! Fiz uma análise no Visage Sain.
-
-📋 Diagnóstico: Pele ${data.tipo_pele}
-🎯 Problema: ${data.problema_principal}
-
-Gostaria de receber o prontuário completo com links dos produtos recomendados.`;
-            whatsappLink.href = `https://wa.me/5511982779326?text=${encodeURIComponent(message)}`;
+            if (data.whatsapp_link) {
+                whatsappLink.href = data.whatsapp_link;
+            } else {
+                whatsappLink.style.display = 'none';
+            }
         }
 
         resetButton.addEventListener('click', () => {
