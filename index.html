@@ -451,8 +451,6 @@
             line-height: 1.2;
         }
 
-        .btn-amazon { background: #FF9900; color: white; }
-        .btn-ml     { background: #FFE600; color: #333; }
         .btn-shopee { background: #EE4D2D; color: white; }
     </style>
 </head>
@@ -720,9 +718,7 @@
                         <div class="product-name">${p.name}</div>
                         <div class="product-price">${p.price_range}</div>
                         <div class="product-buy-buttons">
-                            ${p.amazon_url ? `<a href="${p.amazon_url}" target="_blank" rel="noopener" class="btn-store btn-amazon">Amazon</a>` : ''}
-                            ${p.ml_url     ? `<a href="${p.ml_url}"     target="_blank" rel="noopener" class="btn-store btn-ml">ML</a>` : ''}
-                            ${p.shopee_url ? `<a href="${p.shopee_url}" target="_blank" rel="noopener" class="btn-store btn-shopee">Shopee</a>` : ''}
+                            ${p.shopee_url ? `<a href="${p.shopee_url}" target="_blank" rel="noopener" class="btn-store btn-shopee">Comprar na Shopee</a>` : ''}
                         </div>
                     </div>
                 `).join('');
