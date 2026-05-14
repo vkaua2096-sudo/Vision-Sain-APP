@@ -2,5 +2,11 @@
   "name": "visage-sain",
   "version": "1.0.0",
   "description": "Diagnóstico de pele com IA",
-  "type": "module"
+  "type": "module",
+  "scripts": {
+    "dev": "vercel dev"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.95.2"
+  }
 }
