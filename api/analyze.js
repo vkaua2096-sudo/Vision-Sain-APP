@@ -1,4 +1,5 @@
 import Anthropic from '@anthropic-ai/sdk';
+import { getProductsForDiagnosis } from './products.js';
 
 const anthropic = new Anthropic();
 
@@ -20,17 +21,17 @@ Responda APENAS com um JSON válido neste formato exato (sem texto adicional, se
     "Noite: passo 2",
     "Semanal: passo 1"
   ],
-  "produtos_recomendados": [
-    "Produto 1 (categoria) - R$ XX-XX",
-    "Produto 2 (categoria) - R$ XX-XX",
-    "Produto 3 (categoria) - R$ XX-XX",
-    "Produto 4 (categoria) - R$ XX-XX",
-    "Produto 5 (categoria) - R$ XX-XX",
-    "Produto 6 (categoria) - R$ XX-XX"
-  ],
+  "categorias_produtos": ["cat1", "cat2", "cat3", "cat4", "cat5", "cat6"],
   "tempo_resultado": "string ex: 8-12 semanas",
   "confianca": 0.85
 }
+
+Categorias disponíveis para "categorias_produtos" (escolha 4 a 6 que mais se encaixam no diagnóstico):
+limpeza_gel, limpeza_espuma, limpeza_leite, agua_micelar,
+hidratante_leve, hidratante_rico,
+protetor_solar_leve, protetor_solar_hidratante,
+serum_vitamina_c, serum_niacinamida, serum_retinol,
+esfoliante_quimico, tratamento_manchas, tratamento_acne, tonico_facial
 
 IMPORTANTE: Se a imagem não mostrar pele claramente, responda:
 {"erro": "Imagem não permite análise. Por favor, envie uma foto bem iluminada do rosto."}`;
@@ -109,6 +110,11 @@ export default async function handler(req, res) {
     if (diagnosis.erro) {
       return res.status(400).json({ error: diagnosis.erro });
     }
+
+    const categorias = Array.isArray(diagnosis.categorias_produtos)
+      ? diagnosis.categorias_produtos : [];
+    diagnosis.produtos_catalogo = getProductsForDiagnosis(diagnosis.tipo_pele, categorias);
+    delete diagnosis.categorias_produtos;
 
     const phone = process.env.WHATSAPP_PHONE;
     if (phone) {
