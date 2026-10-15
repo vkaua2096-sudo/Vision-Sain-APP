@@ -93,6 +93,16 @@ button:disabled { opacity: .5; cursor: not-allowed; }
 .diagnosis-list li::before { content: ""; position: absolute; left: 2px; top: 15px; width: 12px; height: 12px; border-radius: 50%; background: var(--sage); border: 3px solid var(--leaf); }
 .result-note { font-size: 13px; color: var(--mute); margin-top: 12px; padding: 12px 14px; background: var(--soft); border-radius: 16px; }
 
+.step-head { margin-bottom: 12px; }
+.step-head h3 { font-size: 28px; line-height: 1.1; color: var(--ink); margin-bottom: 4px; }
+.step-head p { font-size: 14px; color: var(--mute); max-width: 38ch; }
+.thumbs { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 14px; }
+.thumbs.locked .thumb { pointer-events: none; }
+.thumb { position: relative; flex: none; aspect-ratio: 1; padding: 0; overflow: hidden; border-radius: 18px; background: var(--card); border: 2px dashed var(--track); }
+.thumb.active { border: 2px solid var(--moss); }
+.thumb.done { border: 2px solid var(--leaf); }
+.thumb img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.thumb span { position: absolute; left: 0; right: 0; bottom: 0; padding: 4px 2px; font-size: 11px; font-weight: 600; line-height: 1.2; background: rgba(31, 29, 27, .6); color: #fff; }
 .gauge { position: relative; max-width: 260px; margin: 4px auto 18px; }
 .gauge svg { width: 100%; display: block; }
 .gauge svg path:not(#gaugeArc) { stroke: var(--track); }
@@ -125,17 +135,23 @@ button:disabled { opacity: .5; cursor: not-allowed; }
 <div class="container">
   <div class="hero">
     <h1>Entenda sua pele em segundos</h1>
-    <p>Tire uma foto do rosto e receba sua análise de acne, manchas e rotina de cuidados.</p>
+    <p>Tire 3 fotos do rosto (frontal, lado esquerdo e lado direito) e, se quiser, uma quarta de outro ângulo. Você recebe sua análise de acne, manchas e rotina de cuidados.</p>
   </div>
 
   <div class="camera-section">
+    <div class="step-head">
+      <h3 id="stepTitle">Foto frontal</h3>
+      <p id="stepHint"></p>
+    </div>
+    <div class="thumbs" id="thumbs"></div>
+
     <div class="camera-container" id="cameraContainer">
       <div class="camera-placeholder" id="placeholder">
         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/>
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/>
         </svg>
-        <p>Rosto de frente, luz natural, sem filtro</p>
+        <p>Luz natural, sem filtro nem maquiagem</p>
       </div>
       <video id="video" playsinline autoplay style="display:none;"></video>
       <canvas id="canvas"></canvas>
@@ -151,6 +167,10 @@ button:disabled { opacity: .5; cursor: not-allowed; }
     <div class="button-group" id="captureButtons" style="display: none;">
       <button class="btn-success" id="capturePhoto">Capturar foto</button>
       <button class="btn-secondary" id="stopCamera">Cancelar</button>
+    </div>
+
+    <div class="button-group" id="analyzeGroup" style="display: none;">
+      <button class="btn-primary" id="analyzeBtn">Analisar minha pele</button>
     </div>
 
     <div id="photoStatus" class="status-message info">
@@ -230,13 +250,74 @@ const whatsappLink = document.getElementById('whatsappLink');
 const initialButtons = document.getElementById('initialButtons');
 const captureButtons = document.getElementById('captureButtons');
 const resetButtons = document.getElementById('resetButtons');
+const analyzeGroup = document.getElementById('analyzeGroup');
+const analyzeBtn = document.getElementById('analyzeBtn');
+const stepTitle = document.getElementById('stepTitle');
+const stepHint = document.getElementById('stepHint');
+const thumbsEl = document.getElementById('thumbs');
 
+// 3 fotos obrigatórias + 1 opcional
+const STEPS = [
+  { key: 'frontal',  short: 'Frontal',      title: 'Foto frontal',  required: true,  hint: 'Olhe para a câmera, com o rosto reto e o cabelo longe da testa.' },
+  { key: 'esquerda', short: 'Esquerda',     title: 'Lado esquerdo', required: true,  hint: 'Vire o rosto para mostrar o lado esquerdo.' },
+  { key: 'direita',  short: 'Direita',      title: 'Lado direito',  required: true,  hint: 'Vire o rosto para mostrar o lado direito.' },
+  { key: 'extra',    short: 'Extra (opc.)', title: 'Outro ângulo',  required: false, hint: 'Por exemplo, de perto na área com mais manchas. Se preferir, toque em Analisar minha pele.' }
+];
+const photos = {};
+let step = 0;
+let phase = 'capture'; // capture | busy | done
 let stream = null;
-let capturedImage = null;
 
 function esc(s) {
   return String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 }
+
+function stopStream() {
+  if (stream) stream.getTracks().forEach(t => t.stop());
+  stream = null;
+  video.style.display = 'none';
+}
+
+function renderStep() {
+  const s = STEPS[step];
+  const reqDone = STEPS.filter(x => x.required).every(x => photos[x.key]);
+  const inCapture = phase === 'capture';
+  const cam = !!stream;
+
+  stepTitle.textContent = s.title;
+  stepHint.textContent = (s.required ? `Foto ${step + 1} de 3. ` : 'Opcional. ') + s.hint;
+
+  thumbsEl.classList.toggle('locked', !inCapture);
+  thumbsEl.innerHTML = STEPS.map((x, i) =>
+    `<button type="button" class="thumb${i === step ? ' active' : ''}${photos[x.key] ? ' done' : ''}" data-i="${i}" aria-label="${esc(x.title)}">` +
+    (photos[x.key] ? `<img src="${photos[x.key]}" alt="">` : '') + `<span>${esc(x.short)}</span></button>`
+  ).join('');
+
+  if (!cam) {
+    const p = photos[s.key];
+    if (p) preview.src = p;
+    preview.style.display = p ? 'block' : 'none';
+    placeholder.style.display = p ? 'none' : 'block';
+  }
+  initialButtons.style.display = inCapture && !cam ? 'flex' : 'none';
+  captureButtons.style.display = inCapture && cam ? 'flex' : 'none';
+  analyzeGroup.style.display = inCapture && !cam && reqDone ? 'flex' : 'none';
+}
+
+function savePhoto(data) {
+  photos[STEPS[step].key] = data;
+  const next = STEPS.findIndex(x => !photos[x.key]);
+  if (next !== -1) step = next;
+  renderStep();
+}
+
+thumbsEl.addEventListener('click', (e) => {
+  const b = e.target.closest('.thumb');
+  if (!b || phase !== 'capture') return;
+  stopStream();
+  step = Number(b.dataset.i);
+  renderStep();
+});
 
 startCameraBtn.addEventListener('click', async () => {
   try {
@@ -245,33 +326,28 @@ startCameraBtn.addEventListener('click', async () => {
     });
     video.srcObject = stream;
     video.style.display = 'block';
+    preview.style.display = 'none';
     placeholder.style.display = 'none';
-    initialButtons.style.display = 'none';
-    captureButtons.style.display = 'flex';
+    renderStep();
   } catch (err) {
+    stream = null;
     showStatus('Erro ao acessar câmera. Use a opção Galeria.', 'error');
   }
 });
 
 stopCameraBtn.addEventListener('click', () => {
-  if (stream) stream.getTracks().forEach(track => track.stop());
-  video.style.display = 'none';
-  placeholder.style.display = 'block';
-  initialButtons.style.display = 'flex';
-  captureButtons.style.display = 'none';
+  stopStream();
+  renderStep();
 });
 
-captureBtn.addEventListener('click', () => {
+captureBtn.addEventListener('click', async () => {
+  if (!video.videoWidth) return;
   canvas.width = video.videoWidth;
   canvas.height = video.videoHeight;
   ctx.drawImage(video, 0, 0);
-  capturedImage = canvas.toDataURL('image/jpeg', 0.85);
-  if (stream) stream.getTracks().forEach(track => track.stop());
-  video.style.display = 'none';
-  preview.src = capturedImage;
-  preview.style.display = 'block';
-  captureButtons.style.display = 'none';
-  analyzePhoto();
+  const raw = canvas.toDataURL('image/jpeg', 0.85);
+  stopStream();
+  savePhoto(await compressImage(raw));
 });
 
 uploadBtn.addEventListener('click', () => fileInput.click());
@@ -286,13 +362,8 @@ fileInput.addEventListener('change', (e) => {
   }
   const reader = new FileReader();
   reader.onload = async (event) => {
-    capturedImage = await compressImage(event.target.result);
-    placeholder.style.display = 'none';
-    preview.src = capturedImage;
-    preview.style.display = 'block';
-    initialButtons.style.display = 'none';
+    savePhoto(await compressImage(event.target.result));
     fileInput.value = '';
-    analyzePhoto();
   };
   reader.readAsDataURL(file);
 });
@@ -312,37 +383,47 @@ async function compressImage(dataUrl, maxDim = 1024, quality = 0.8) {
   });
 }
 
+analyzeBtn.addEventListener('click', analyzePhoto);
+
 async function analyzePhoto() {
-  showStatus('Analisando com IA... pode levar até 30 segundos', 'info');
+  phase = 'busy';
+  renderStep();
+  showStatus('Analisando suas fotos com IA... pode levar até 60 segundos', 'info');
   cameraContainer.classList.add('busy');
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 60000);
+  const timeoutId = setTimeout(() => controller.abort(), 90000);
   try {
-    const base64Image = capturedImage.split(',')[1];
+    // "image" (frontal) continua sendo enviada para manter compatibilidade com a API atual
+    const images = STEPS.filter(x => photos[x.key]).map(x => ({ angulo: x.key, image: photos[x.key].split(',')[1] }));
     const response = await fetch('/api/analyze', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ image: base64Image }),
+      body: JSON.stringify({ image: images[0].image, images }),
       signal: controller.signal
     });
     clearTimeout(timeoutId);
     if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.error || 'Erro na análise');
+      let msg = 'Erro na análise';
+      try { const er = await response.json(); msg = er.error || msg; } catch (_) {}
+      throw new Error(msg);
     }
     const data = await response.json();
     displayDiagnosis(data);
+    phase = 'done';
+    renderStep();
     photoStatus.classList.remove('show');
     ctaSection.classList.add('show');
     resetButtons.style.display = 'flex';
+    diagnosisSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
   } catch (error) {
     clearTimeout(timeoutId);
     const msg = error.name === 'AbortError'
-      ? 'Análise demorou mais que 60 segundos. Tente novamente.'
+      ? 'Análise demorou mais que 90 segundos. Tente novamente.'
       : `Erro: ${error.message}`;
     console.error('Erro:', error);
     showStatus(msg, 'error');
-    resetButtons.style.display = 'flex';
+    phase = 'capture';
+    renderStep();
   }
   cameraContainer.classList.remove('busy');
 }
@@ -425,12 +506,12 @@ resetButton.addEventListener('click', () => {
   diagnosisSection.classList.remove('show');
   ctaSection.classList.remove('show');
   photoStatus.classList.remove('show');
-  preview.style.display = 'none';
-  placeholder.style.display = 'block';
-  capturedImage = null;
+  Object.keys(photos).forEach(k => delete photos[k]);
+  step = 0;
+  phase = 'capture';
   fileInput.value = '';
-  initialButtons.style.display = 'flex';
   resetButtons.style.display = 'none';
+  renderStep();
   window.scrollTo({ top: 0, behavior: 'smooth' });
 });
 
@@ -438,6 +519,8 @@ function showStatus(message, type) {
   statusText.textContent = message;
   photoStatus.className = `status-message ${type} show`;
 }
+
+renderStep();
 </script>
 </body>
 </html>
