@@ -2,6 +2,8 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
+<meta name="color-scheme" content="light">
+<meta name="theme-color" content="#FFFFFF">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Visage Sain - Análise Inteligente de Pele</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -10,28 +12,32 @@
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; }
 :root {
-  --bg: #E2DED9; --bg-grad: linear-gradient(180deg, #EADFDB 0%, #DEDBD6 45%, #E3E1DD 100%);
-  --grad: linear-gradient(90deg, #E8955A 0%, #EEDC9B 100%); --track: #D8D3CC;
-  --sage: #CBDFD3; --leaf: #8DB873; --moss: #4F7A5F;
-  --ink: #1F1D1B; --mute: #7B7773; --card: #EFEEEB; --soft: #F4F3F0;
-  --rose: #E3C6C4; --sky: #D3E0CA; --sand: #F3DFB4;
-  --err-bg: #F3DAD6; --err: #9A3F36; color-scheme: light;
-}
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg: #1E1B19; --bg-grad: linear-gradient(180deg, #26211F 0%, #1B1917 100%);
-    --track: #3C3835; --sage: #35453B; --leaf: #9CC884; --moss: #A9CDB5;
-    --ink: #F0ECE8; --mute: #A59F99; --card: #2A2624; --soft: #322E2B;
-    --rose: #4D3535; --sky: #34432F; --sand: #4A4023;
-    --err-bg: #4D3030; --err: #F2B8B8; color-scheme: dark;
-  }
+  --bg: #FFFFFF; --bg-grad: linear-gradient(180deg, #FFFFFF 0%, #F4F9F2 100%);
+  --grad: linear-gradient(90deg, #4F7A5F 0%, #8DB873 100%); --track: #DDE8DA;
+  --sage: #E4F0E4; --leaf: #8DB873; --moss: #4F7A5F; --line: #D5E5D2;
+  --ink: #1F2A22; --mute: #6B7A70; --card: #FFFFFF; --soft: #F4F9F2;
+  --rose: #F6DEDC; --sky: #DDEDD8; --sand: #F6EBC8;
+  --err-bg: #FBE4E1; --err: #9A3F36; color-scheme: light;
 }
 :root { padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px); }
 body { font-family: 'DM Sans', system-ui, sans-serif; background: var(--bg); background-image: var(--bg-grad); background-attachment: fixed; color: var(--ink); line-height: 1.55; min-height: 100vh; }
 h1, h2, h3, .logo { font-family: 'Instrument Serif', Georgia, serif; font-weight: 400; letter-spacing: -0.01em; }
 header { padding: 20px 20px 0; max-width: 480px; margin: 0 auto; }
-.logo { font-size: 22px; color: var(--moss); }
-.tagline { display: none; }
+.brand { display: flex; align-items: center; gap: 12px; padding-bottom: 14px; border-bottom: 1px solid var(--line); }
+.brand-mark { width: 48px; height: 48px; flex: none; border-radius: 16px; background: var(--grad); display: grid; place-items: center; box-shadow: 0 6px 16px rgba(79, 122, 95, .28); }
+.brand-mark svg { width: 28px; height: 28px; }
+.logo { font-size: 38px; line-height: 1; color: var(--ink); letter-spacing: -0.02em; }
+.logo em { font-style: normal; color: var(--moss); }
+.tagline { display: block; font-size: 11.5px; font-weight: 600; letter-spacing: .14em; text-transform: uppercase; color: var(--mute); margin-top: 6px; }
+.how { background: var(--sage); border: 1px solid var(--line); border-radius: 26px; padding: 18px 18px 16px; margin: 18px 0 6px; box-shadow: 0 8px 24px rgba(79, 122, 95, .10); }
+.how h2 { font-size: 28px; line-height: 1.1; margin-bottom: 8px; color: var(--ink); }
+.how ol { list-style: none; padding: 0; }
+.how li { display: flex; align-items: flex-start; gap: 12px; padding: 8px 0; }
+.how .n { flex: none; width: 30px; height: 30px; border-radius: 50%; background: var(--grad); color: #FFFFFF; font-weight: 700; font-size: 14px; display: grid; place-items: center; }
+.how b { display: block; font-size: 15.5px; color: var(--ink); line-height: 1.3; }
+.how small { display: block; font-size: 13.5px; color: var(--mute); line-height: 1.4; margin-top: 2px; }
+.how-tip { display: inline-block; margin-top: 6px; padding: 8px 14px; border-radius: 999px; background: #FFFFFF; color: var(--moss); font-size: 13px; font-weight: 600; }
+
 .container { max-width: 480px; margin: 0 auto; padding: 8px 18px 40px; }
 .hero { margin: 14px 0 6px; }
 .hero h1 { font-size: 38px; line-height: 1.06; margin-bottom: 10px; color: var(--ink); }
@@ -55,6 +61,7 @@ header { padding: 20px 20px 0; max-width: 480px; margin: 0 auto; }
 .camera-placeholder p { font-size: 13.5px; }
 video, canvas, .preview-image { position: absolute; inset: 0; width: 100%; height: 100%; display: block; object-fit: cover; }
 #canvas { display: none; }
+#video { transform: scaleX(-1); } /* preview espelhado, como um espelho; a foto salva continua sem espelhar */
 
 .button-group { display: flex; gap: 10px; margin-bottom: 14px; }
 button {
@@ -62,8 +69,8 @@ button {
   font-family: 'DM Sans', sans-serif; font-size: 15px; font-weight: 600; cursor: pointer;
 }
 button:focus-visible, .btn-whatsapp:focus-visible { outline: 3px solid var(--leaf); outline-offset: 2px; }
-.btn-primary, .btn-success { background: var(--grad); color: #2B1E12; box-shadow: 0 6px 16px rgba(232, 149, 90, .28); }
-.btn-secondary { background: var(--card); color: var(--ink); border: 1px solid rgba(255, 255, 255, .75); box-shadow: 0 6px 16px rgba(60, 50, 40, .08); }
+.btn-primary, .btn-success { background: var(--grad); color: #FFFFFF; box-shadow: 0 6px 16px rgba(79, 122, 95, .28); }
+.btn-secondary { background: var(--card); color: var(--ink); border: 1px solid var(--line); box-shadow: 0 6px 16px rgba(79, 122, 95, .10); }
 button:active { transform: scale(.98); }
 button:disabled { opacity: .5; cursor: not-allowed; }
 
@@ -77,7 +84,7 @@ button:disabled { opacity: .5; cursor: not-allowed; }
 
 .diagnosis-section { display: none; }
 .diagnosis-section.show { display: block; }
-.diagnosis-card { background: var(--card); border-radius: 26px; padding: 20px; margin-bottom: 14px; border: 1px solid rgba(255, 255, 255, .75); box-shadow: 0 8px 24px rgba(60, 50, 40, .08); }
+.diagnosis-card { background: var(--card); border-radius: 26px; padding: 20px; margin-bottom: 14px; border: 1px solid var(--line); box-shadow: 0 8px 24px rgba(79, 122, 95, .10); }
 .diagnosis-badge { display: none; }
 .diagnosis-title { font-size: 30px; line-height: 1.1; color: var(--ink); margin-bottom: 6px; }
 .diagnosis-subtitle { font-size: 14px; font-weight: 600; color: var(--moss); margin-bottom: 8px; }
@@ -106,6 +113,21 @@ button:disabled { opacity: .5; cursor: not-allowed; }
 .thumb span { position: absolute; left: 0; right: 0; bottom: 0; padding: 4px 2px; font-size: 11px; font-weight: 600; line-height: 1.2; background: #CBDFD3; color: #2F4A3A; }
 .thumb.active span { background: #4F7A5F; color: #FFFFFF; }
 .thumb.done span { background: rgba(31, 29, 27, .6); color: #FFFFFF; }
+body.splashing { overflow: hidden; }
+#splash { position: fixed; inset: 0; z-index: 1000; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: calc(24px + env(safe-area-inset-top, 0px)) 24px calc(24px + env(safe-area-inset-bottom, 0px)); background: radial-gradient(circle at 15% 12%, #E4F0E4 0, transparent 42%), radial-gradient(circle at 88% 92%, #E4F0E4 0, transparent 46%), var(--bg-grad); transition: opacity .5s ease, visibility .5s ease; }
+#splash.hide { opacity: 0; visibility: hidden; }
+.splash-mark { width: 88px; height: 88px; border-radius: 28px; background: var(--grad); display: grid; place-items: center; box-shadow: 0 14px 34px rgba(79, 122, 95, .32); animation: splashPop .7s cubic-bezier(.2, .8, .2, 1) both; }
+.splash-mark svg { width: 52px; height: 52px; }
+.splash-name { font-family: 'Instrument Serif', Georgia, serif; font-size: 58px; line-height: 1; letter-spacing: -0.02em; color: var(--ink); margin-top: 22px; animation: splashUp .7s .15s ease both; }
+.splash-name em { font-style: normal; color: var(--moss); }
+.splash-tag { font-size: 15.5px; color: var(--mute); max-width: 26ch; margin-top: 12px; animation: splashUp .7s .3s ease both; }
+.splash-bar { width: min(260px, 70vw); height: 6px; border-radius: 999px; background: var(--track); overflow: hidden; margin-top: 44px; animation: splashUp .7s .45s ease both; }
+.splash-fill { display: block; height: 100%; width: 0; border-radius: 999px; background: var(--grad); animation: splashLoad 2.8s .6s ease-in-out forwards; }
+.splash-load { font-size: 12px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; color: var(--mute); margin-top: 12px; animation: splashUp .7s .45s ease both; }
+@keyframes splashPop { from { opacity: 0; transform: scale(.8); } to { opacity: 1; transform: scale(1); } }
+@keyframes splashUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes splashLoad { 0% { width: 0; } 25% { width: 30%; } 45% { width: 48%; } 70% { width: 82%; } 100% { width: 100%; } }
+@media (prefers-reduced-motion: reduce) { #splash { transition: none; } .splash-mark, .splash-name, .splash-tag, .splash-bar, .splash-load { animation: none; } .splash-fill { animation: splashLoad 1.2s ease-in-out forwards; } }
 .gauge { position: relative; max-width: 260px; margin: 4px auto 18px; }
 .gauge svg { width: 100%; display: block; }
 .gauge svg path:not(#gaugeArc) { stroke: var(--track); }
@@ -124,22 +146,51 @@ button:disabled { opacity: .5; cursor: not-allowed; }
 .cta-section.show { display: block; }
 .cta-title { font-family: 'Instrument Serif', Georgia, serif; font-size: 26px; line-height: 1.1; margin-bottom: 8px; color: var(--ink); }
 .cta-text { font-size: 14px; margin-bottom: 16px; color: var(--mute); }
-.btn-whatsapp { background: var(--grad); color: #2B1E12; text-align: center; font-weight: 600; width: 100%; padding: 15px; font-size: 15px; font-weight: 600; border-radius: 999px; text-decoration: none; display: block; }
+.btn-whatsapp { background: var(--grad); color: #FFFFFF; text-align: center; font-weight: 600; width: 100%; padding: 15px; font-size: 15px; font-weight: 600; border-radius: 999px; text-decoration: none; display: block; }
 
 .footer-note { text-align: center; font-size: 12px; color: var(--mute); margin-top: 18px; padding: 0 12px; }
 </style>
 </head>
-<body>
+<body class="splashing">
+
+<div id="splash" role="status" aria-label="Carregando Visage Sain">
+  <div class="splash-mark" aria-hidden="true">
+    <svg viewBox="0 0 32 32"><path d="M16 4c6.2 4.2 9.5 9.2 9.5 14.6a9.5 9.5 0 0 1-19 0C6.5 13.2 9.8 8.2 16 4z" fill="#FFFFFF"/><path d="M16 12v14M16 18l4-3.5M16 22l-4-3.5" stroke="#4F7A5F" stroke-width="1.6" stroke-linecap="round" fill="none"/></svg>
+  </div>
+  <div class="splash-name">Visage <em>Sain</em></div>
+  <p class="splash-tag">Seu app de cuidados diários com o rosto</p>
+  <div class="splash-bar" aria-hidden="true"><span class="splash-fill" id="splashFill"></span></div>
+  <div class="splash-load">Carregando</div>
+</div>
+
 
 <header>
-  <div class="logo">Visage Sain</div>
+  <div class="brand">
+    <span class="brand-mark" aria-hidden="true">
+      <svg viewBox="0 0 32 32"><path d="M16 4c6.2 4.2 9.5 9.2 9.5 14.6a9.5 9.5 0 0 1-19 0C6.5 13.2 9.800 8.200 16 4z" fill="#FFFFFF"/><path d="M16 12v14M16 18l4-3.500M16 22l-4-3.500" stroke="#4F7A5F" stroke-width="1.6" stroke-linecap="round" fill="none"/></svg>
+    </span>
+    <div>
+      <div class="logo">Visage <em>Sain</em></div>
+      <div class="tagline">Análise inteligente de pele</div>
+    </div>
+  </div>
 </header>
 
 <div class="container">
   <div class="hero">
     <h1>Entenda sua pele em segundos</h1>
-    <p>Tire 3 fotos do rosto (frontal, lado esquerdo e lado direito) e, se quiser, uma quarta de outro ângulo. Você recebe sua análise de acne, manchas e rotina de cuidados.</p>
+    <p>Análise de acne e manchas com IA, direto no celular.</p>
   </div>
+
+  <section class="how" aria-labelledby="howTitle">
+    <h2 id="howTitle">Como funciona</h2>
+    <ol>
+      <li><span class="n">1</span><div><b>Tire 3 fotos do rosto</b><small>Frontal, lado esquerdo e lado direito.</small></div></li>
+      <li><span class="n">2</span><div><b>Uma quarta foto é opcional</b><small>De outro ângulo ou de perto em uma área com manchas.</small></div></li>
+      <li><span class="n">3</span><div><b>Receba sua análise</b><small>Acne, manchas, porcentagens e rotina de cuidados.</small></div></li>
+    </ol>
+    <span class="how-tip">Dica: luz natural, sem filtro e sem maquiagem</span>
+  </section>
 
   <div class="camera-section">
     <div class="step-head">
@@ -191,7 +242,7 @@ button:disabled { opacity: .5; cursor: not-allowed; }
       <h3 class="section-title">Sua pele hoje</h3>
       <div class="gauge">
         <svg viewBox="0 0 200 112" role="img" aria-label="Pontuação geral da pele">
-          <defs><linearGradient id="gGrad" x1="0" x2="1" y1="0" y2="0"><stop offset="0" stop-color="#E59B58"/><stop offset="1" stop-color="#EBD48A"/></linearGradient></defs>
+          <defs><linearGradient id="gGrad" x1="0" x2="1" y1="0" y2="0"><stop offset="0" stop-color="#4F7A5F"/><stop offset="1" stop-color="#8DB873"/></linearGradient></defs>
           <path d="M20 100 A80 80 0 0 1 180 100" fill="none" stroke="var(--sage)" stroke-width="16" stroke-linecap="round"/>
           <path id="gaugeArc" d="M20 100 A80 80 0 0 1 180 100" fill="none" stroke="url(#gGrad)" stroke-width="16" stroke-linecap="round" stroke-dasharray="251.33" stroke-dashoffset="251.33"/>
         </svg>
@@ -530,6 +581,23 @@ function showStatus(message, type) {
 }
 
 renderStep();
+
+// Tela de abertura: barra de carregamento fictícia
+(function () {
+  const sp = document.getElementById('splash');
+  const fill = document.getElementById('splashFill');
+  if (!sp || !fill) return;
+  let closed = false;
+  function closeSplash() {
+    if (closed) return;
+    closed = true;
+    sp.classList.add('hide');
+    document.body.classList.remove('splashing');
+    setTimeout(() => sp.remove(), 600);
+  }
+  fill.addEventListener('animationend', () => setTimeout(closeSplash, 400));
+  setTimeout(closeSplash, 5000); // garantia caso a animação não dispare
+})();
 </script>
 </body>
 </html>
