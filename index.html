@@ -128,6 +128,12 @@ body.splashing { overflow: hidden; }
 @keyframes splashUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 @keyframes splashLoad { 0% { width: 0; } 25% { width: 30%; } 45% { width: 48%; } 70% { width: 82%; } 100% { width: 100%; } }
 @media (prefers-reduced-motion: reduce) { #splash { transition: none; } .splash-mark, .splash-name, .splash-tag, .splash-bar, .splash-load { animation: none; } .splash-fill { animation: splashLoad 1.2s ease-in-out forwards; } }
+#productsList li { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+#productsList li span { flex: 1; }
+.buy { flex: none; padding: 5px 14px; border-radius: 999px; border: 1.5px solid var(--moss); color: var(--moss); font-size: 12.5px; font-weight: 600; text-decoration: none; background: #FFFFFF; }
+.pname { display: block; font-size: 12.5px; color: var(--mute); margin-top: 2px; }
+.buy:focus-visible { outline: 3px solid var(--leaf); outline-offset: 2px; }
+.aff-note { font-size: 12px; color: var(--mute); margin-top: 10px; display: none; }
 .gauge { position: relative; max-width: 260px; margin: 4px auto 18px; }
 .gauge svg { width: 100%; display: block; }
 .gauge svg path:not(#gaugeArc) { stroke: var(--track); }
@@ -268,6 +274,7 @@ body.splashing { overflow: hidden; }
     <div class="diagnosis-card">
       <h3 class="section-title">Produtos recomendados</h3>
       <ul class="diagnosis-list" id="productsList"></ul>
+      <p class="aff-note" id="affNote">Alguns links são de afiliados: se você comprar por eles, podemos receber uma comissão, sem custo extra para você.</p>
       <p class="result-note">Resultados esperados em <strong id="tempoResultado">8-12 semanas</strong></p>
     </div>
   </div>
@@ -531,6 +538,41 @@ function renderScores(d) {
   }).join('');
 }
 
+// ===== LINKS DE AFILIADO (Shopee) =====
+// Ordem importa: o primeiro item cujas palavras-chave aparecem no nome do produto recomendado pela IA é o escolhido.
+// Itens mais específicos ficam antes dos genéricos.
+const AMAZON_TAG = ''; // opcional: tag da Amazon para gerar link de busca em produtos fora da lista
+const AFFILIATE_CATALOG = [
+  { name: 'Actine Gel de Limpeza com Vitamina C 240ml (Darrow)',  keywords: ['limpeza com vitamina c', 'sabonete com vitamina c'], url: 'https://s.shopee.com.br/2VseRuvfbF' },
+  { name: 'Principia Gel de Limpeza Anti-Acne GL-01 350g',        keywords: ['gel de limpeza', 'limpeza facial', 'limpeza', 'sabonete', 'cleanser'], url: 'https://s.shopee.com.br/20wNqytRPA' },
+  { name: 'Principia Protetor Solar PS-01 FPS 60 Toque Seco',     keywords: ['protetor solar', 'filtro solar', 'fps'], url: 'https://s.shopee.com.br/4qGZEB0nKZ' },
+  { name: 'Sérum Vitamina C VC-10 30ml',                          keywords: ['vitamina c'], url: 'https://s.shopee.com.br/5VWG1S5htq' },
+  { name: 'Sérum Facial Mix-01 com Niacinamida e Ácidos',         keywords: ['niacinamida e acido', 'niacinamida com acido', 'niacinamida e acidos'], url: 'https://s.shopee.com.br/9APYODZGxR' },
+  { name: 'Sérum NC-10 com 10% de Niacinamida',                   keywords: ['niacinamida'], url: 'https://s.shopee.com.br/4Vdipcra1U' },
+  { name: 'Adesivos Hidrocoloides em Estrela (kit)',              keywords: ['estrela', 'adesivo colorido', 'adesivos coloridos'], url: 'https://s.shopee.com.br/2LZEFflkgO' },
+  { name: 'Adesivos Hidrocoloides Transparentes (kit)',           keywords: ['adesivo', 'hidrocoloide', 'espinha', 'curativo'], url: 'https://s.shopee.com.br/gR0GcVcwC' },
+  { name: 'CeraVe Facial Loção Hidratante 52ml',                  keywords: ['hidratante'], url: 'https://s.shopee.com.br/1qcxfUDPI7' }
+];
+
+function norm(t) { return String(t).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, ''); }
+function isRealUrl(u) { return /^https?:\/\//.test(u) && !/SEU-LINK/i.test(u); }
+
+function affiliateHit(produto) {
+  const n = norm(produto);
+  const hit = AFFILIATE_CATALOG.find(it => isRealUrl(it.url) && it.keywords.some(k => n.includes(norm(k))));
+  if (hit) return hit;
+  if (AMAZON_TAG) return { name: '', url: `https://www.amazon.com.br/s?k=${encodeURIComponent(produto)}&tag=${encodeURIComponent(AMAZON_TAG)}` };
+  return null;
+}
+function affiliateUrl(produto) { const h = affiliateHit(produto); return h ? h.url : null; }
+
+function productItem(p) {
+  const hit = affiliateHit(p);
+  if (!hit) return `<li><span>${esc(p)}</span></li>`;
+  const sub = hit.name ? `<small class="pname">${esc(hit.name)}</small>` : '';
+  return `<li><span>${esc(p)}${sub}</span><a class="buy" href="${esc(hit.url)}" target="_blank" rel="sponsored noopener noreferrer">Ver produto</a></li>`;
+}
+
 function displayDiagnosis(data) {
   renderScores(data);
   document.getElementById('diagnosisTitle').textContent = `Pele ${data.tipo_pele || '—'}`;
@@ -551,8 +593,9 @@ function displayDiagnosis(data) {
 
   document.getElementById('treatmentList').innerHTML = Array.isArray(data.rotina_tratamento)
     ? data.rotina_tratamento.map(t => `<li>${esc(t)}</li>`).join('') : '';
-  document.getElementById('productsList').innerHTML = Array.isArray(data.produtos_recomendados)
-    ? data.produtos_recomendados.map(p => `<li>${esc(p)}</li>`).join('') : '';
+  const prods = Array.isArray(data.produtos_recomendados) ? data.produtos_recomendados : [];
+  document.getElementById('productsList').innerHTML = prods.map(productItem).join('');
+  document.getElementById('affNote').style.display = prods.some(p => affiliateUrl(p)) ? 'block' : 'none';
 
   diagnosisSection.classList.add('show');
   if (data.whatsapp_link) {
