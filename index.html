@@ -646,3 +646,60 @@ renderStep();
 </script>
 </body>
 </html>
+<section class="perfil">
+  <h3>Qual o seu tipo de pele?</h3>
+  <div class="chips" id="skinChips">
+    <button data-v="normal">Normal</button>
+    <button data-v="seca">Seca</button>
+    <button data-v="oleosa">Oleosa</button>
+    <button data-v="mista">Mista</button>
+    <button data-v="sensivel">Sensível</button>
+    <button data-v="nao-sei">Não sei</button>
+  </div>
+
+  <h3>Quanta água você bebe por dia?</h3>
+  <svg id="drop" viewBox="0 0 100 120" width="90" height="108">
+    <defs><clipPath id="dc"><path d="M50 6C50 6 12 52 12 78a38 38 0 0 0 76 0C88 52 50 6 50 6Z"/></clipPath></defs>
+    <path d="M50 6C50 6 12 52 12 78a38 38 0 0 0 76 0C88 52 50 6 50 6Z" fill="#eaf6f0" stroke="#4f9d7a" stroke-width="3"/>
+    <rect id="fill" x="0" width="100" y="116" height="120" fill="#8fd3f4" clip-path="url(#dc)" style="transition:y .4s"/>
+    <circle cx="38" cy="78" r="4" fill="#2d3b36"/><circle cx="62" cy="78" r="4" fill="#2d3b36"/>
+    <path id="mouth" d="M36 92Q50 104 64 92" fill="none" stroke="#2d3b36" stroke-width="3.5" stroke-linecap="round"/>
+    <circle cx="30" cy="90" r="5" fill="#ffb3b3" opacity=".6"/><circle cx="70" cy="90" r="5" fill="#ffb3b3" opacity=".6"/>
+  </svg>
+  <input type="range" id="water" min="0" max="4" step="1" value="2">
+  <p id="waterLabel" class="wl"></p>
+</section>
+
+<style>
+.perfil h3{margin:16px 0 8px;font-size:16px;color:#2d3b36}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chips button{padding:8px 14px;border-radius:999px;border:1.5px solid #4f9d7a;background:#fff;color:#2d6a4f}
+.chips button.on{background:#4f9d7a;color:#fff}
+#drop{display:block;margin:8px auto}
+#water{width:100%;accent-color:#4f9d7a}
+.wl{text-align:center;font-weight:600;color:#2d6a4f}
+</style>
+
+<script>
+const niveis=[
+  {t:"Menos de 1 litro (1–3 copos)",v:"menos de 1 litro",h:.2,m:"M36 100Q50 90 64 100"},
+  {t:"4 a 5 copos (~1 litro)",v:"1 litro",h:.4,m:"M38 96Q50 98 62 96"},
+  {t:"1,5 litro",v:"1,5 litro",h:.62,m:"M36 92Q50 104 64 92"},
+  {t:"2 litros",v:"2 litros",h:.82,m:"M34 90Q50 108 66 90"},
+  {t:"Mais de 2 litros",v:"mais de 2 litros",h:1,m:"M32 88Q50 112 68 88"}
+];
+const perfil={skinType:"",water:niveis[2].v};
+function setWater(i){
+  const n=niveis[i];
+  document.getElementById("fill").setAttribute("y",116-96*n.h);
+  document.getElementById("mouth").setAttribute("d",n.m);
+  document.getElementById("waterLabel").textContent=n.t;
+  perfil.water=n.v;
+}
+document.getElementById("water").oninput=e=>setWater(+e.target.value);
+document.querySelectorAll("#skinChips button").forEach(b=>b.onclick=()=>{
+  document.querySelectorAll("#skinChips button").forEach(x=>x.classList.remove("on"));
+  b.classList.add("on"); perfil.skinType=b.dataset.v;
+});
+setWater(2);
+</script>
